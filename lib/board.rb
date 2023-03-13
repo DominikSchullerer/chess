@@ -1,8 +1,10 @@
 require_relative "./string"
+require_relative "./rules_gamestate"
 
 class Board
-  def initialize
+  def new_game
     create_board
+    parse_FEN_string(RulesGamestate::START_FEN)
   end
 
   def create_board
@@ -30,6 +32,47 @@ class Board
         end
       end
     end
+
+    @active_color = fen_array[8]
+
+    @castling_availability = fen_array[9]
+    @en_passant_availability = fen_array[10]
+
+    @half_turn_without_advance = fen_array[11]
+    @turn = fen_array[12]
+  end
+
+  def FEN_string
+    fen_array = []
+
+    fen_array << position_string
+    fen_array << @active_color
+    fen_array << @castling_availability
+    fen_array << @en_passant_availability
+    fen_array << @half_turn_without_advance
+    fen_array << @turn
+
+    fen_array.join(" ")
+  end
+
+  def position_string
+    position_array = Array.new(8)
+    8.times.each do |rank|
+      rank_array = []
+      empty_count = 0
+      8.times.each do |file|
+        if @squares[rank][file].nil?
+          empty_count += 1
+        else
+          rank_array << empty_count.to_s if empty_count > 0
+          empty_count = 0
+          rank_array << @squares[rank][file]
+        end
+      end
+      rank_array << empty_count.to_s if empty_count > 0
+      position_array[7 - rank] = rank_array.join
+    end
+    position_array.join("/")
   end
 
   def draw_board
@@ -81,7 +124,6 @@ class Board
 end
 
 board = Board.new
+board.new_game
 board.draw_board
-puts ""
-board.parse_FEN_string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-board.draw_board
+p board.FEN_string
